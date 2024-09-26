@@ -12,11 +12,14 @@
 #include "m_usb.h"
 
 #define PRINTNUM(x) m_usb_tx_uint(x); m_usb_tx_char(10); m_usb_tx_char(13);
+
+//LED Macros for toggling on/off
 #define LED_on() set(PORTC,6);
 #define LED_off() clear(PORTC,6);
-#define TIMER_MAX 15265  // 16-bit timer max value
+#define timer_max 15265  // timer max value
 #define prescaler 1024
 
+//time if last press used to calculate interval
 int first_press = 0;
 int time_interval = 0;
 
@@ -44,7 +47,7 @@ void wait_for_press(){
     if (current_state >= first_press) {
         time_interval = current_state - first_press;  // No overflow
     } else {
-        time_interval = (TIMER_MAX - first_press) + current_state;  // Handle overflow
+        time_interval = (timer_max - first_press) + current_state;  // Handle overflow
     }
 
     //calculating the time in ms from ticks, 102400.0 is float of prescaler * 1000 (ms in s)
@@ -65,6 +68,8 @@ int main(){
 
     // Set up LED as output and configure PC7 for input with pull-up
     clear(PORTC, 6);
+    clear(DDRC, 7);
+
     set(DDRC, 6);  // PC6 as output (LED)
     set(PORTC, 7);  // Enable internal pull-up on PC7
 

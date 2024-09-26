@@ -1,9 +1,11 @@
 /* Name: main.c
  * Author: <Jason Li>
  * Copyright: <adapted from code in class notes>
- * Leo helped me understand the while (!bit_is_set(IFR3, ICF3))) part
+ * Leo helped me understand the while(!bit_is_set(IFR3, ICF3))) part
  * He explained the logic of a constantly updating ICF3
  * CHATGPT for debugging, comments, fixing syntax errors
+ * Matt helped me with understanding the logic of having a "current_state", "last_state"
+ * He also helped me with understanding the logic of when to update those two values
  * License: <insert your license reference here>
  */
 
@@ -11,13 +13,17 @@
 #include "m_usb.h"
 
 #define PRINTNUM(x) m_usb_tx_uint(x); m_usb_tx_char(10); m_usb_tx_char(13);
+
+//Macros for toggling LED
+//green LED
 #define LED_on() set(PORTC,6);
 #define LED_off() clear(PORTC,6);
+//red LED
 #define LED2_on() set(PORTB,5);
 #define LED2_off() clear(PORTB,5);
 
 #define prescaler 1024
-#define timer_max 15625 // 16-bit timer maximum value
+#define timer_max 15625 // max timer value
 
 unsigned int last_state = 0;
 int time_interval = 0;
@@ -60,13 +66,13 @@ int main() {
     // Set LED pins as output
     clear(DDRC,7);
 
-    //set(PORTC,7); // Enable internal pullup on PC7
     set(DDRC,6);  // Set PC6 as output for LED1
     set(DDRB,5);  // Set PB5 as output for LED2
 
     init_timer3();
 
 	//show end of initialization
+    //shows LEDs work, helps with debugging
 	set(PORTC,6);
 	set(PORTB,5);
 	_delay_ms(2000);
@@ -75,14 +81,18 @@ int main() {
 
     while (1) {
         wait_for_press(); // Wait for the button press and measure time
-		int freq = (timer_max/time_interval);
-		m_usb_tx_string("\n");
-		m_usb_tx_int(freq);
+		
+        //convert ot frequency
+        int freq = (timer_max/time_interval);
+		//print funtions for debugging
+        //m_usb_tx_string("\n");
+		//m_usb_tx_int(freq);
 		
         //Not Ideal but && conditionals cause my LEDs to not light up and the 
         //time interval to be extremely off, more than 150hz for 662hz
         //using sliding window method was the only way to have the LEDs light up
         //with reasonable values
+        //use if statements to gradually check from the top what the frequency is
         if (freq > 678){
 			LED_off();
             LED2_off();	
